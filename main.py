@@ -5,10 +5,11 @@ Run mqtt broker on localhost: sudo apt-get install mosquitto mosquitto-clients
 Example run: python3 mqtt-all.py --broker 192.168.1.164 --topic enviro --username xxx --password xxxx
 """
 
-import argparse
-import st7735
+from datetime import datetime
 import time
-import ssl
+import tomllib
+import psycopg
+import asyncio
 from bme280 import BME280
 from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
@@ -107,8 +108,59 @@ def check_wifi():
         return False
 
 
-def main():
-    # Raspberry Pi ID
+def read_config():
+    path = "config.toml"
+    with open(path, "rb") as f:
+        config = tomllib.load(f)
+
+    return config
+
+
+def get_db_conn_string(config):
+    return(f"""
+        dbname={config["db"]["db"]}
+        user={config["db"]["user"]}
+        password={config["db"]["password"]}
+        host={config["db"]["host"]}
+    """)
+
+
+async def insert_data(data):
+    ts = datetime.now()
+    conn_str = get_db_conn_string()
+    async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
+        async with aconn.cursor() as acur:
+            await acur.execute("""
+                INSERT INTO
+                    enviro (
+                        timestamp,
+                        temperature,
+                        pressure,
+                        humidity,
+                        oxidised,
+                        reduced,
+                        nh3,
+                        lux
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING""",
+                (
+                    ts,
+                    data["temperature"],
+                    data["pressure"],
+                    data["humidity"],
+                    data["oxidised"],
+                    data["reduced"],
+                    data["nh3"],
+                    data["lux"]
+                )
+            )
+
+
+async def main():
+    config = read_config()
+
+    mqtt_config = config.get("mqtt")
     device_serial_number = get_serial_number()
     device_id = "raspi-" + device_serial_number
 
@@ -116,7 +168,7 @@ def main():
     mqtt_client.on_connect = on_connect
     mqtt_client.on_publish = on_publish
 
-    mqtt_client.connect("192.168.1.5", 1883)
+    mqtt_client.connect(mqtt_config["host"], mqtt_config["port"])
 
     bus = SMBus(1)
 
@@ -124,7 +176,8 @@ def main():
     bme280 = BME280(i2c_dev=bus)
 
     # Set an initial update time
-    update_time = time.time()
+    mqtt_update_time = time.time()
+    db_update_time = time.time()
 
     # Set start time
     start_time = time.time()
@@ -142,14 +195,26 @@ def main():
                 k = 0
 
             now = time.time()
-            time_since_update = now - update_time
-            start_delay = now - start_time 
-            if time_since_update >= 1 and start_delay > 60*20:
-                update_time = time.time()
-                mqtt_client.publish("enviro_plus/slow", json.dumps(values), retain=False)
+            time_since_mqtt_update = now - mqtt_update_time
+            time_since_db_update = now - db_update_time
+            start_delay = now - start_time
+            if start_delay > 60*20:
+                if time_since_mqtt_update >= mqtt_config["period"]:
+                    try:
+                        mqtt_update_time = time.time()
+                        mqtt_client.publish(mqtt_config["topic"]+"/slow", json.dumps(values), retain=False)
+                    except Exception as e:
+                        print("Error publishing to mqtt: ", e)
+                if time_since_db_update >= config["db"]["period"]:
+                    try:
+                        await insert_data(values)
+                    except Exception as e:
+                        print("Error inserting into db: ", e)
+                
         except Exception as e:
             print(e)
+        
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
