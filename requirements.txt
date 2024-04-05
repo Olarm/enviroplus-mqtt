@@ -3,3 +3,4 @@ BME280==0.7
 pms5003==1.0.0
 enviroplus==0.0.6
 psycopg2==2.9.9
+toml==0.10.2

@@ -7,7 +7,7 @@ Example run: python3 mqtt-all.py --broker 192.168.1.164 --topic enviro --usernam
 
 from datetime import datetime
 import time
-import tomllib
+import toml
 import psycopg2
 from bme280 import BME280
 from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
@@ -110,7 +110,7 @@ def check_wifi():
 def read_config():
     path = "config.toml"
     with open(path, "rb") as f:
-        config = tomllib.load(f)
+        config = toml.load(f)
 
     return config
 
