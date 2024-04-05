@@ -13,6 +13,8 @@ from bme280 import bme280
 from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
 
+from config import *
+
 try:
     # Transitional fix for breaking change in LTR559
     from ltr559 import LTR559
@@ -107,20 +109,12 @@ def check_wifi():
         return False
 
 
-def read_config():
-    path = "config.toml"
-    with open(path, "rb") as f:
-        config = toml.load(f)
-
-    return config
-
-
-def get_db_conn_string(config):
+def get_db_conn_string():
     return(f"""
-        dbname={config["db"]["db"]}
-        user={config["db"]["user"]}
-        password={config["db"]["password"]}
-        host={config["db"]["host"]}
+        dbname={db_config["db"]}
+        user={db_config["user"]}
+        password={db_config["password"]}
+        host={db_config["host"]}
     """)
 
 
@@ -157,9 +151,6 @@ def insert_data(data):
 
 
 def main():
-    config = read_config()
-
-    mqtt_config = config.get("mqtt")
     device_serial_number = get_serial_number()
     device_id = "raspi-" + device_serial_number
 
@@ -204,7 +195,7 @@ def main():
                         mqtt_client.publish(mqtt_config["topic"]+"/slow", json.dumps(values), retain=False)
                     except Exception as e:
                         print("Error publishing to mqtt: ", e)
-                if time_since_db_update >= config["db"]["period"]:
+                if time_since_db_update >= db_config["period"]:
                     try:
                         insert_data(values)
                     except Exception as e:
