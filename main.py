@@ -9,7 +9,7 @@ from datetime import datetime
 import time
 import toml
 import psycopg2
-from bme280 import BME280
+from bme280 import bme280
 from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
 
