@@ -2,4 +2,4 @@ st7735==1.0.0
 BME280==0.7
 pms5003==1.0.0
 enviroplus==0.0.6
-psycopg==3.1.18
+psycopg2==2.9.9

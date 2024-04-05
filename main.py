@@ -8,8 +8,7 @@ Example run: python3 mqtt-all.py --broker 192.168.1.164 --topic enviro --usernam
 from datetime import datetime
 import time
 import tomllib
-import psycopg
-import asyncio
+import psycopg2
 from bme280 import BME280
 from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
@@ -125,12 +124,12 @@ def get_db_conn_string(config):
     """)
 
 
-async def insert_data(data):
+def insert_data(data):
     ts = datetime.now()
     conn_str = get_db_conn_string()
-    async with await psycopg.AsyncConnection.connect(conn_str) as aconn:
-        async with aconn.cursor() as acur:
-            await acur.execute("""
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
                 INSERT INTO
                     enviro (
                         timestamp,
@@ -157,7 +156,7 @@ async def insert_data(data):
             )
 
 
-async def main():
+def main():
     config = read_config()
 
     mqtt_config = config.get("mqtt")
@@ -207,7 +206,7 @@ async def main():
                         print("Error publishing to mqtt: ", e)
                 if time_since_db_update >= config["db"]["period"]:
                     try:
-                        await insert_data(values)
+                        insert_data(values)
                     except Exception as e:
                         print("Error inserting into db: ", e)
                 
@@ -217,4 +216,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
