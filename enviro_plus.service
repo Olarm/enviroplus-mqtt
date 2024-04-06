@@ -3,7 +3,7 @@ Description=Collect data from a Pimoroni enviroplus hat and publish to mqtt and 
 After=network.target multi-user.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/ola/enviroplus-mqtt/main.py
+ExecStart=/home/ola/enviroplus-mqtt/venv/bin/python3 /home/ola/enviroplus-mqtt/main.py
 Type=simple
 Restart=always
 WorkingDirectory=/home/ola/dev/enviroplus-mqtt/
