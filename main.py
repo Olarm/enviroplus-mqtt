@@ -54,11 +54,11 @@ def read_bme280():
     comp_factor = 2.3
     values = {}
     cpu_temp = get_cpu_temperature()
-    raw_temp = bme280.get_temperature()  # float
+    raw_temp = bme280.read_temperature()  # float
     comp_temp = raw_temp - ((cpu_temp - raw_temp) / comp_factor)
     values["temperature"] = round(comp_temp, 1)
-    values["pressure"] = round(bme280.get_pressure(), 1)
-    values["humidity"] = round(bme280.get_humidity(), 1)
+    values["pressure"] = round(bme280.read_pressure(), 1)
+    values["humidity"] = round(bme280.read_humidity(), 1)
     data = gas.read_all()
     values["oxidised"] = round(data.oxidising / 1000, 1)
     values["reduced"] = round(data.reducing / 1000, 1)
