@@ -1,0 +1,12 @@
+[Unit]
+Description=Collect data from a Pimoroni enviroplus hat and publish to mqtt and insert into a database
+After=network.target multi-user.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/ola/enviroplus-mqtt/main.py
+Type=simple
+Restart=always
+WorkingDirectory=/home/ola/dev/enviroplus-mqtt/
+
+[Install]
+WantedBy=multi-user.target
