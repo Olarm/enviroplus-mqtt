@@ -49,16 +49,16 @@ def on_publish(client, userdata, mid, rc, properties):
 
 
 # Read values from BME280 and return as dict
-def read_bme280(bme):
+def read_bme280():
     # Compensation factor for temperature
     comp_factor = 2.3
     values = {}
     cpu_temp = get_cpu_temperature()
-    raw_temp = bme.get_temperature()  # float
+    raw_temp = bme280.get_temperature()  # float
     comp_temp = raw_temp - ((cpu_temp - raw_temp) / comp_factor)
     values["temperature"] = round(comp_temp, 1)
-    values["pressure"] = round(bme.get_pressure(), 1)
-    values["humidity"] = round(bme.get_humidity(), 1)
+    values["pressure"] = round(bme280.get_pressure(), 1)
+    values["humidity"] = round(bme280.get_humidity(), 1)
     data = gas.read_all()
     values["oxidised"] = round(data.oxidising / 1000, 1)
     values["reduced"] = round(data.reducing / 1000, 1)
@@ -162,7 +162,7 @@ def main():
 
 
     # Create BME280 instance
-    bme = bme280.full_setup(1, 0x76)
+    bme280.full_setup(1, 0x76)
 
     # Set an initial update time
     mqtt_update_time = time.time()
@@ -177,7 +177,7 @@ def main():
     k = 0
     while True:
         try:
-            values = read_bme280(bme)
+            values = read_bme280()
             k += 1
             if k == 20:
                 print(values)
