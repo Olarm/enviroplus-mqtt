@@ -208,6 +208,7 @@ def main():
                 if time_since_db_update >= db_config["period"]:
                     try:
                         insert_data(values)
+                        db_update_time = time.time()
                     except Exception as e:
                         logging.error("Error inserting into db: ", e)
                 
