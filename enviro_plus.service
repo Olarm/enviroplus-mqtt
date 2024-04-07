@@ -6,7 +6,7 @@ After=network.target multi-user.target
 ExecStart=/home/ola/enviroplus-mqtt/venv/bin/python3 /home/ola/enviroplus-mqtt/main.py
 Type=simple
 Restart=always
-WorkingDirectory=/home/ola/dev/enviroplus-mqtt/
+WorkingDirectory=/home/ola/enviroplus-mqtt/
 
 [Install]
 WantedBy=multi-user.target
