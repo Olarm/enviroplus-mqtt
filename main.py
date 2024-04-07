@@ -62,11 +62,10 @@ def on_publish(client, userdata, mid, rc, properties):
 # Read values from BME280 and return as dict
 def read_bme280():
     # Compensation factor for temperature
-    comp_factor = 2.3
     values = {}
     cpu_temp = get_cpu_temperature()
     raw_temp = bme280.read_temperature()  # float
-    comp_temp = raw_temp - ((cpu_temp - raw_temp) / comp_factor)
+    comp_temp = raw_temp - ((cpu_temp - raw_temp) / COMP_FACTOR)
     values["temperature"] = round(comp_temp, 1)
     values["pressure"] = round(bme280.read_pressure(), 1)
     values["humidity"] = round(bme280.read_humidity(), 1)
