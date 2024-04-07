@@ -8,12 +8,23 @@ Example run: python3 mqtt-all.py --broker 192.168.1.164 --topic enviro --usernam
 from datetime import datetime
 import time
 import toml
+import logging|
 import psycopg2
 from bme280 import bme280
 from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
 
 from config import *
+
+
+logging.basicConfig(
+    filename='enviroplus-mqtt.log', 
+    level=LOG_LEVEL,
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
 
 try:
     # Transitional fix for breaking change in LTR559
@@ -119,9 +130,11 @@ def get_db_conn_string():
 
 
 def insert_data(data):
+    logging.debug(f"Beginning insertion of \n{data} into db")
     ts = datetime.now()
     conn_str = get_db_conn_string()
     with psycopg2.connect(conn_str) as conn:
+        logging.debug("Successfully connected to db")
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO
@@ -148,6 +161,7 @@ def insert_data(data):
                     data["lux"]
                 )
             )
+            logging.debug("Insert complete")
 
 
 def main():
@@ -187,14 +201,15 @@ def main():
                 if time_since_mqtt_update >= mqtt_config["period"]:
                     try:
                         mqtt_update_time = time.time()
+                        logging.debug("Publishing data to mqtt")
                         mqtt_client.publish(mqtt_config["topic"]+"/slow", json.dumps(values), retain=False)
                     except Exception as e:
-                        print("Error publishing to mqtt: ", e)
+                        logging.error("Error publishing to mqtt: ", e)
                 if time_since_db_update >= db_config["period"]:
                     try:
                         insert_data(values)
                     except Exception as e:
-                        print("Error inserting into db: ", e)
+                        logging.error("Error inserting into db: ", e)
                 
         except Exception as e:
             print(e)
