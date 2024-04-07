@@ -178,16 +178,12 @@ def main():
     while True:
         try:
             values = read_bme280()
-            k += 1
-            if k == 20:
-                print(values)
-                k = 0
 
             now = time.time()
             time_since_mqtt_update = now - mqtt_update_time
             time_since_db_update = now - db_update_time
-            start_delay = now - start_time
-            if start_delay > 60*20:
+            start_delta = now - start_time
+            if start_delta > START_DELAY:
                 if time_since_mqtt_update >= mqtt_config["period"]:
                     try:
                         mqtt_update_time = time.time()
