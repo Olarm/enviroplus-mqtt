@@ -6,6 +6,7 @@ Example run: python3 mqtt-all.py --broker 192.168.1.164 --topic enviro --usernam
 """
 
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import time
 import toml
 import logging
@@ -130,7 +131,7 @@ def get_db_conn_string():
 
 def insert_data(data):
     logging.debug(f"Beginning insertion of \n{data} into db")
-    ts = datetime.now()
+    ts = datetime.now(ZoneInfo("Oslo/Europe"))
     conn_str = get_db_conn_string()
     with psycopg2.connect(conn_str) as conn:
         logging.debug("Successfully connected to db")
