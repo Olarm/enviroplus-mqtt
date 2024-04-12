@@ -16,6 +16,7 @@ from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
 
 from config import *
+from db import initiate_db, insert_local_db
 
 
 logging.basicConfig(
@@ -130,11 +131,11 @@ def get_db_conn_string():
 
 
 def insert_data(data):
-    logging.debug(f"Beginning insertion of \n{data} into db")
+    logger.debug(f"Beginning insertion of \n{data} into db")
     ts = datetime.now(ZoneInfo("Europe/Oslo"))
     conn_str = get_db_conn_string()
     with psycopg2.connect(conn_str) as conn:
-        logging.debug("Successfully connected to db")
+        logger.debug("Successfully connected to db")
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO
@@ -148,7 +149,7 @@ def insert_data(data):
                         nh3,
                         lux
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, ?)
                 ON CONFLICT DO NOTHING""",
                 (
                     ts,
@@ -161,10 +162,12 @@ def insert_data(data):
                     data["lux"]
                 )
             )
-            logging.debug("Insert complete")
+            logger.debug("Insert complete")
 
 
 def main():
+    initiate_db()
+
     device_serial_number = get_serial_number()
     device_id = "raspi-" + device_serial_number
 
@@ -172,7 +175,14 @@ def main():
     mqtt_client.on_connect = on_connect
     mqtt_client.on_publish = on_publish
 
-    mqtt_client.connect(mqtt_config["host"], mqtt_config["port"])
+    mqtt_status = True
+    try:
+        logger.info("Connecting to mqtt")
+        mqtt_client.connect(mqtt_config["host"], mqtt_config["port"])
+    except Exception as e:
+        logger.info("Failed connecting to mqtt")
+        mqtt_status = False
+
 
 
     # Create BME280 instance
@@ -198,24 +208,37 @@ def main():
             time_since_db_update = now - db_update_time
             start_delta = now - start_time
             if start_delta > START_DELAY:
-                if time_since_mqtt_update >= mqtt_config["period"]:
-                    try:
-                        mqtt_update_time = time.time()
-                        logging.debug("Publishing data to mqtt")
-                        mqtt_client.publish(mqtt_config["topic"]+"/slow", json.dumps(values), retain=False)
-                    except Exception as e:
-                        logging.error("Error publishing to mqtt: ", e)
+                if mqtt_status == True:
+                    if time_since_mqtt_update >= mqtt_config["period"]:
+                        try:
+                            mqtt_update_time = time.time()
+                            logger.debug("Publishing data to mqtt")
+                            mqtt_client.publish(mqtt_config["topic"]+"/slow", json.dumps(values), retain=False)
+                        except Exception as e:
+                            logger.error("Error publishing to mqtt: ", e)
+
                 if time_since_db_update >= db_config["period"]:
+                    logger.debug("Inserting into dbs")
                     try:
                         insert_data(values)
-                        db_update_time = time.time()
                     except Exception as e:
-                        logging.error("Error inserting into db: ", e)
+                        logger.error("Error inserting into db: ", e)
+
+                    try: 
+                        logger.debug("Inserting into local db")
+                        insert_local_db(values)
+                    except Exception as e:
+                        logger.error("Error inserting into local db: ", e)
+
+                    db_update_time = time.time()
+                    
+
                 
         except Exception as e:
-            print(e)
+            logger.error(e)
         
 
 
 if __name__ == "__main__":
+    logger.info("Starting enviroplus logger")
     main()
