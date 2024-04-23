@@ -3,7 +3,7 @@ __pycache__
 
 config.py
 comments.txt
-enviro.db
+enviro.db 
 
 *.db
 *.log
