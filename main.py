@@ -149,7 +149,7 @@ def insert_data(data):
                         nh3,
                         lux
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT DO NOTHING""",
                 (
                     ts,
