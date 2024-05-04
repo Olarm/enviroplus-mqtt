@@ -159,7 +159,7 @@ def insert_data(data):
                     data["oxidised"],
                     data["reduced"],
                     data["nh3"],
-                    data["lux"]
+                    data["lux"],
                 )
             )
             logger.debug("Insert complete")
