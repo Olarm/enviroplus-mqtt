@@ -132,7 +132,7 @@ def get_db_conn_string():
 
 def insert_data(data):
     logger.debug(f"Beginning insertion of \n{data} into db")
-    ts = datetime.now(ZoneInfo("Europe/Oslo"))
+    ts = datetime.now()
     conn_str = get_db_conn_string()
     with psycopg2.connect(conn_str) as conn:
         logger.debug("Successfully connected to db")
