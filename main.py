@@ -139,7 +139,7 @@ def insert_data(data):
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO
-                    enviro (
+                    enviro_plus (
                         timestamp,
                         temperature,
                         pressure,
