@@ -200,7 +200,7 @@ def main():
 
     k = 0
     while True:
-        sleep.wait(0.01)
+        time.sleep(0.01)
         try:
             values = read_bme280()
 
