@@ -184,10 +184,10 @@ def main():
         mqtt_status = False
 
 
-    time_correct = False
-    while check_last_insert_ts():
+    logger.info("Checking system time...")
+    while not check_last_insert_ts():
         time.sleep(10)
-
+    logger.info("System time greater then last db entry")
 
 
     # Create BME280 instance
