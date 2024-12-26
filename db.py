@@ -28,6 +28,31 @@ def initiate_db():
 
 
 
+def check_last_insert_ts():
+    logger.debug("Checking if system time > last logged DB time")
+    conn = sqlite3.connect("enviro.db")
+    ts = datetime.now(ZoneInfo("Europe/Oslo"))
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT timestamp
+            FROM enviro
+            ORDER BY timestamp DESC
+            LIMIT 1
+        """)
+        row = cur.fetchone()
+        last_db_ts = datetime.fromisoformat(row[0])
+        if ts > last_db_ts:
+            logger.debug("Time seems fine.")
+            return True
+        else:
+            return False
+    except Exception as e:
+        logger.error(f"Error getting ts from db:\n{e}")
+        return False
+        
+
+
 def insert_local_db(data):
     conn = sqlite3.connect("enviro.db")
     ts = datetime.now(ZoneInfo("Europe/Oslo"))
@@ -63,7 +88,7 @@ def insert_local_db(data):
         logger.debug(f"Inserted into local db with timestamp {ts}")
         conn.close()
     except Exception as e:
-        logger.error(f"Error loging to db:\n{e}")
+        logger.error(f"Error logging to db:\n{e}")
 
 
 

@@ -16,7 +16,7 @@ from pms5003 import PMS5003, ReadTimeoutError, SerialTimeoutError
 from enviroplus import gas
 
 from config import *
-from db import initiate_db, insert_local_db
+from db import initiate_db, insert_local_db, check_last_insert_ts
 
 
 logging.basicConfig(
@@ -182,6 +182,11 @@ def main():
     except Exception as e:
         logger.info("Failed connecting to mqtt")
         mqtt_status = False
+
+
+    time_correct = False
+    while check_last_insert_ts():
+        time.sleep(10)
 
 
 
